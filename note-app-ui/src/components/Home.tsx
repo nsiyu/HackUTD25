@@ -10,6 +10,7 @@ import {
   FiClock,
   FiHeadphones,
   FiSettings,
+  FiActivity,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { noteService, Note } from "../services/notes";
@@ -25,6 +26,8 @@ import AnimatedNoteContent from "./AnimatedNoteContent";
 import { Dropdown } from './Dropdown';
 import { FiFile, FiEdit3, FiEye, FiShare2, FiDownload, FiTrash2, FiCopy, FiPrinter } from 'react-icons/fi';
 import { useProcessLecture } from "../hooks/useProcessLecture";
+import { AskAIModal } from "./AskAIModal";
+import { getApiUrl } from "../config/api";
 
 function Home() {
   const navigate = useNavigate();
@@ -496,6 +499,13 @@ function Home() {
                   handleEditBlur();
                   setIsEditingContent(false);
                 }}
+                onAskAI={handleAskAI}
+                onEdit={handleEdit}
+                onGenerateDiagram={handleGenerateDiagram}
+                setToolbarPositionSafe={setToolbarPositionSafe}
+                setChatMessages={setChatMessages}
+                setIsChatOpen={setIsChatOpen}
+                selectedText={selectedText}
               />
             </div>
           ) : (
@@ -563,6 +573,100 @@ function Home() {
     onProcessedText: handleProcessedText,
     selectedNote,
   });
+
+  const handleGenerateDiagram = useCallback(() => {
+    if (selectedText) {
+      // Here you would implement the diagram generation logic
+      setChatMessages(prev => [...prev, 
+        { role: 'user', content: `Generate a diagram for this text: "${selectedText}"` }
+      ]);
+      setIsChatOpen(true);
+    }
+  }, [selectedText]);
+
+  const { sendMessage } = useHumeAI({
+    onAIResponse: (response) => {
+      setChatMessages(prev => [...prev, { role: 'ai', content: response }]);
+    }
+  });
+
+  const handleAskAI = useCallback(async () => {
+    console.log('handleAskAI called, selectedText:', selectedText);
+    if (selectedText) {
+      try {
+        console.log('Setting chat messages and opening chat');
+        setChatMessages(prev => [...prev, { role: 'user', content: selectedText }]);
+        setIsChatOpen(true);
+        
+        console.log('Sending message to HumeAI');
+        await sendMessage(selectedText);
+        
+      } catch (error) {
+        console.error('Error getting AI response:', error);
+        setChatMessages(prev => [...prev, 
+          { role: 'ai', content: 'Sorry, I encountered an error processing your request.' }
+        ]);
+      }
+    }
+  }, [selectedText, sendMessage]);
+
+  const handleEdit = async (editPrompt: string, selectedText: string) => {
+    if (!selectedNote) return;
+
+    try {
+      const response = await fetch(`${getApiUrl()}/api/v1/lecture/edit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wholeLecture: selectedNote.content,
+          partToModify: selectedText,
+          suggestion: editPrompt
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to edit text');
+      }
+
+      const data = await response.json();
+      
+      if (!data.modifiedText) {
+        throw new Error('Invalid response from server');
+      }
+
+      // Update the note with the modified text
+      await handleNoteUpdate({
+        ...selectedNote,
+        content: data.modifiedText
+      });
+
+      // Close the toolbar after successful edit
+      setToolbarPosition(null);
+      
+    } catch (error) {
+      console.error('Error editing text:', error);
+    }
+  };
+
+  const handleNewNote = async () => {
+    try {
+      const newNote = await noteService.createNote({
+        title: 'Untitled Note',
+        content: '',
+        userId: session?.user?.id || '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      
+      setSelectedNote(newNote);
+      setNotes(prev => [newNote, ...prev]);
+    } catch (error) {
+      console.error('Error creating new note:', error);
+    }
+  };
 
   return (
     <div className="h-screen bg-white dark:bg-dark-bg flex flex-col">
@@ -671,6 +775,24 @@ function Home() {
           {renderMainContent()}
         </div>
       </div>
+
+      <AskAIModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        messages={chatMessages}
+        onSendMessage={async (message) => {
+          try {
+            setChatMessages(prev => [...prev, { role: 'user', content: message }]);
+            await sendMessage(message);
+          } catch (error) {
+            console.error('Error sending message:', error);
+            setChatMessages(prev => [...prev, 
+              { role: 'ai', content: 'Sorry, I encountered an error processing your request.' }
+            ]);
+          }
+        }}
+        initialPrompt={selectedText}
+      />
     </div>
   );
 }
