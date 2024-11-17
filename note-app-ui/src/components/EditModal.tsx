@@ -7,19 +7,10 @@ type EditModalProps = {
 
 import { useState } from "react";
 
-type EditModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  selectedText: string;
-  entireLecture: string;
-  onSubmit: (suggestion: string) => void;
-};
-
 export function EditModal({
   isOpen,
   onClose,
   selectedText,
-  entireLecture,
   onSubmit,
 }: EditModalProps) {
   const [suggestion, setSuggestion] = useState("");

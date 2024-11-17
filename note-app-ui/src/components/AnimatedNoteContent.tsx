@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Note } from '../services/notes';
-import { useTextAnimation } from '../hooks/useTextAnimation';
 import debounce from 'lodash/debounce';
 import { FloatingToolbar } from './FloatingToolbar';
 import getCaretCoordinates from 'textarea-caret';
@@ -21,24 +20,21 @@ interface AnimatedNoteContentProps {
     React.SetStateAction<{ role: 'user' | 'ai'; content: string }[]>
   >;
   setIsChatOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  selectedText: string;
 }
 
 function AnimatedNoteContent({
   note,
   onContentChange,
   onTextSelection,
-  animate,
   onBlur,
   onAskAI,
   onEdit,
   onGenerateDiagram,
-  setToolbarPositionSafe,
-  setChatMessages,
-  setIsChatOpen,
+  selectedText,
 }: AnimatedNoteContentProps) {
   const [content, setContent] = useState(note.content);
   const [toolbarPosition, setToolbarPosition] = useState<{ x: number; y: number } | null>(null);
-  const [selectedText, setSelectedText] = useState('');
 
   const handleTextSelection = useCallback(
     (
@@ -47,16 +43,13 @@ function AnimatedNoteContent({
         | React.KeyboardEvent<HTMLTextAreaElement>
     ) => {
       const textarea = e.currentTarget;
-      const { selectionStart, selectionEnd, value } = textarea;
+      const { selectionStart, selectionEnd } = textarea;
 
       if (selectionStart === selectionEnd) {
         setToolbarPosition(null);
-        setSelectedText('');
         return;
       }
 
-      const selected = value.substring(selectionStart, selectionEnd);
-      setSelectedText(selected);
 
       const textareaRect = textarea.getBoundingClientRect();
       const startCoords = getCaretCoordinates(textarea, selectionStart);
@@ -83,16 +76,6 @@ function AnimatedNoteContent({
       }, 300),
     [note, onContentChange]
   );
-
-  // Only use animation when explicitly needed
-  const displayText = animate
-    ? useTextAnimation({
-        originalText: content,
-        newText: note.content,
-        speed: 30,
-        onComplete: () => setContent(note.content),
-      })
-    : content;
 
   // Handle local state immediately but debounce the parent update
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -150,7 +133,7 @@ function AnimatedNoteContent({
         position={toolbarPosition}
         onAskAI={handleAskAI}
         onEdit={handleEdit}
-        onGenerateDiagram={onGenerateDiagram}
+        onGenerateDiagram={onGenerateDiagram || (() => {})}
         onCloseToolbar={() => setToolbarPosition(null)}
         selectedText={selectedText}
       />

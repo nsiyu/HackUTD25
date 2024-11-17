@@ -6,15 +6,12 @@ import {
   FiUser,
   FiMic,
   FiMicOff,
-  FiSend,
   FiClock,
   FiHeadphones,
   FiSettings,
-  FiActivity,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { noteService, Note } from "../services/notes";
-import { useDebounce } from "../hooks/useDebounce";
 import { useHumeAI } from "../hooks/useHumeAI";
 import { authService } from "../services/auth";
 import getCaretCoordinates from "textarea-caret/index.js";
@@ -47,8 +44,6 @@ function Home() {
     x: number;
     y: number;
   } | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [recordingError, setRecordingError] = useState<string | null>(null);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const mainContentRef = useRef<HTMLDivElement>(null); // Reference to the scrollable container
 
@@ -109,17 +104,6 @@ function Home() {
     }
   }, [isEditingContent]);
 
-  const handleContentChange = (event: React.FormEvent<HTMLDivElement>) => {
-    const newContent = event.currentTarget.innerText;
-    setTempContent(newContent);
-  };
-
-  const handleEditSubmit = async (suggestion: string) => {
-    if (!selectedNote) return;
-
-    await submitEdit(selectedText, suggestion);
-  };
-
   const handleLogout = async () => {
     try {
       await authService.logout();
@@ -162,21 +146,6 @@ function Home() {
     } catch (error) {
       console.error("Error creating note:", error);
     }
-  };
-
-  const debouncedNoteUpdate = useDebounce(async (updatedNote: Note) => {
-    try {
-      await noteService.updateNote(updatedNote.id, updatedNote);
-      setNotes(
-        notes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
-      );
-    } catch (error) {
-      console.error("Error updating note:", error);
-    }
-  }, 500);
-
-  const handleNoteContentChange = (updatedContent: string) => {
-    setTempContent(updatedContent);
   };
 
   const setToolbarPositionSafe = (x: number, y: number) => {
@@ -295,11 +264,9 @@ function Home() {
   const {
     isListening,
     isMuted,
-    error: humeError,
     startListening,
-    stopListening,
     toggleMute,
-    cleanup: cleanupHumeAI,
+    sendMessage,
   } = useHumeAI({
     onTranscriptReceived: (transcript) => {
       if (transcript.trim()) {
@@ -320,84 +287,6 @@ function Home() {
       ]);
     },
   });
-
-  const handleCloseChatMenu = useCallback(() => {
-    setIsChatOpen(false);
-    if (isListening) {
-      cleanupHumeAI();
-    }
-  }, [isListening, cleanupHumeAI]);
-
-  const renderChatInput = () => (
-    <div className="p-4 border-t border-maya/10">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const input = e.currentTarget.elements.namedItem(
-            "message"
-          ) as HTMLInputElement;
-          if (input.value.trim()) {
-            setChatMessages([
-              ...chatMessages,
-              { role: "user", content: input.value },
-            ]);
-            input.value = "";
-          }
-        }}
-        className="space-y-3"
-      >
-        {humeError && (
-          <div className="p-2 bg-pink/10 text-pink rounded-lg text-sm">
-            {humeError}
-          </div>
-        )}
-
-        <div className="flex gap-2">
-          <input
-            type="text"
-            name="message"
-            placeholder="Ask about this note..."
-            className="flex-1 px-4 py-2 bg-white/50 border border-maya/20 rounded-lg focus:outline-none focus:border-maya"
-          />
-
-          <button
-            type="button"
-            onClick={() => {
-              if (!isListening) {
-                startListening();
-              } else {
-                toggleMute();
-              }
-            }}
-            className={`p-2 rounded-lg transition-all ${
-              isListening
-                ? isMuted
-                  ? "bg-pink text-white hover:bg-pink/90"
-                  : "bg-maya text-white hover:bg-maya/90"
-                : "border border-maya/20 text-jet/70 dark:text-dark-text/70 hover:bg-pink/10 hover:text-pink hover:border-pink"
-            }`}
-          >
-            {isListening ? (
-              isMuted ? (
-                <FiMicOff size={20} />
-              ) : (
-                <FiMic size={20} />
-              )
-            ) : (
-              <FiMic size={20} />
-            )}
-          </button>
-
-          <button
-            type="submit"
-            className="p-2 bg-maya text-white rounded-lg hover:bg-maya/90 transition-all"
-          >
-            <FiSend size={20} />
-          </button>
-        </div>
-      </form>
-    </div>
-  );
 
   const handleEditBlur = async () => {
     if (isEditingContent && selectedNote) {
@@ -634,12 +523,6 @@ function Home() {
     }
   }, [selectedText]);
 
-  const { sendMessage } = useHumeAI({
-    onAIResponse: (response) => {
-      setChatMessages(prev => [...prev, { role: 'ai', content: response }]);
-    }
-  });
-
   const handleAskAI = useCallback(async () => {
     console.log('handleAskAI called, selectedText:', selectedText);
     if (selectedText) {
@@ -698,16 +581,6 @@ function Home() {
       
     } catch (error) {
       console.error('Error editing text:', error);
-    }
-  };
-
-  const handleNewNote = async () => {
-    try {
-      const newNote = await noteService.createNote("Untitled Note", "");
-      setNotes([newNote, ...notes]);
-      setSelectedNote(newNote);
-    } catch (error) {
-      console.error("Error creating note:", error);
     }
   };
 
@@ -840,6 +713,19 @@ function Home() {
 
         <div className="flex-1 p-8 overflow-y-auto relative h-screen flex flex-col bg-white/90 dark:bg-dark-surface/90" ref={mainContentRef}>
           {renderMainContent()}
+          {toolbarPosition && selectedText && (
+            <div 
+              style={{
+                position: 'absolute',
+                left: toolbarPosition.x,
+                top: toolbarPosition.y,
+                transform: 'translate(-50%, -100%)'
+              }}
+              className="bg-white dark:bg-dark-surface shadow-lg rounded-lg p-2 flex gap-2"
+            >
+              {/* Your toolbar buttons/content here */}
+            </div>
+          )}
         </div>
       </div>
 

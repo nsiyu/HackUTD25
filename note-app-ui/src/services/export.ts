@@ -1,6 +1,5 @@
 import { Note } from './notes';
 import html2pdf from 'html2pdf.js';
-import { nanoid } from 'nanoid';
 
 export const exportService = {
   async exportToPdf(note: Note) {
@@ -33,9 +32,6 @@ export const exportService = {
   },
 
   generateShareLink(noteId: string): string {
-    // Generate a random share ID
-    const shareId = nanoid(10);
-    // In a real app, you would save this to the database
-    return `${window.location.origin}/shared/${shareId}`;
+    return `https://yourapp.com/share/${noteId}`;
   }
 };

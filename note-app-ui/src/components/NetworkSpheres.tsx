@@ -7,7 +7,6 @@ function NetworkSpheres() {
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const animationRef = useRef<number>();
-  const mousePosition = useRef({ x: 0, y: 0 });
   const previousMousePosition = useRef({ x: 0, y: 0 });
 
   useEffect(() => {

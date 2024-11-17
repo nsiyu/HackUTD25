@@ -238,5 +238,22 @@ export function useHumeAI({ onTranscriptReceived, onAudioReceived, onAIResponse 
     setIsMuted(prev => !prev);
   }, []);
 
-  return { isListening, isMuted, error, startListening, stopListening, toggleMute, cleanup };
+  const sendMessage = useCallback(async (message: string) => {
+    if (socketRef.current) {
+      const socket = socketRef.current;
+      const audioInput = { data: message };
+      socket.sendAudioInput(audioInput);
+    }
+  }, []);
+
+  return {
+    isListening,
+    isMuted,
+    error,
+    startListening,
+    stopListening,
+    toggleMute,
+    cleanup,
+    sendMessage,
+  };
 }
