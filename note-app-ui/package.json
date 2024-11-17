@@ -17,6 +17,7 @@
     "@types/lodash": "^4.17.12",
     "@uiw/react-md-editor": "^4.0.4",
     "framer-motion": "^11.11.10",
+    "html2pdf.js": "^0.10.2",
     "hume": "^0.9.3",
     "lodash": "^4.17.21",
     "mermaid": "^11.4.0",

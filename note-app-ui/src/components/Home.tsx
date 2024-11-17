@@ -30,6 +30,8 @@ import { AskAIModal } from "./AskAIModal";
 import { getApiUrl } from "../config/api";
 import { NoteModal } from "./NoteModal";
 import { DiagramModal } from "./DiagramModal";
+import { exportService } from "../services/export";
+import { ShareLinkModal } from './ShareLinkModal';
 
 function Home() {
   const navigate = useNavigate();
@@ -54,6 +56,9 @@ function Home() {
   const [tempContent, setTempContent] = useState(""); // State to hold temporary content during editing
 
   const chatMessagesRef = useRef<HTMLDivElement>(null);
+
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareLink, setShareLink] = useState('');
 
   useEffect(() => {
     if (chatMessagesRef.current) {
@@ -407,8 +412,34 @@ function Home() {
   const renderMainContent = () => {
     if (!selectedNote) {
       return (
-        <div className="h-full flex items-center justify-center text-jet/50">
-          <p>Select a note or create a new one</p>
+        <div className="h-full flex flex-col items-center justify-center text-center px-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-maya/20 to-pink/20 rounded-2xl flex items-center justify-center mb-6">
+            <svg 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="w-8 h-8 text-maya/70"
+            >
+              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-jet dark:text-dark-text mb-3">
+            Welcome to Notable
+          </h2>
+          <p className="text-jet/60 dark:text-dark-text/60 max-w-md mb-8">
+            Select a note from the sidebar or create a new one to get started. 
+            You can record lectures, ask AI questions, and create beautiful diagrams.
+          </p>
+          <button
+            onClick={() => setIsNoteModalOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-maya/60 hover:bg-maya/70 text-white rounded-xl transition-colors"
+          >
+            <FiPlus size={20} />
+            <span>Create Your First Note</span>
+          </button>
         </div>
       );
     }
@@ -567,8 +598,29 @@ function Home() {
   ];
 
   const shareMenuItems = [
-    { label: 'Share Link', onClick: () => {/* handle share link */}, icon: <FiShare2 size={14} /> },
-    { label: 'Export', onClick: () => {/* handle export */}, icon: <FiDownload size={14} /> },
+    { 
+      label: 'Share Link', 
+      onClick: () => {
+        if (selectedNote) {
+          const link = exportService.generateShareLink(selectedNote.id);
+          setShareLink(link);
+          setIsShareModalOpen(true);
+        }
+      }, 
+      icon: <FiShare2 size={14} /> 
+    },
+    { 
+      label: 'Export to PDF', 
+      onClick: async () => {
+        if (selectedNote) {
+          const success = await exportService.exportToPdf(selectedNote);
+          if (!success) {
+            alert('Failed to export PDF. Please try again.');
+          }
+        }
+      }, 
+      icon: <FiDownload size={14} /> 
+    },
   ];
 
   const { isProcessing, isRecording, toggleRecording } = useProcessLecture({
@@ -819,6 +871,12 @@ function Home() {
         isOpen={showDiagramModal}
         onClose={() => setShowDiagramModal(false)}
         selectedText={selectedText}
+      />
+
+      <ShareLinkModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        shareLink={shareLink}
       />
     </div>
   );
