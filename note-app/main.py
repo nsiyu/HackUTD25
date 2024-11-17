@@ -13,7 +13,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://hack-utd-25.vercel.app/"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://hack-utd-25.vercel.app",
+        "https://hack-utd-25-git-main-nicolashuangs-projects.vercel.app",  # Preview deployments
+        "https://hack-utd-25-*.vercel.app"  # All Vercel deployment URLs
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
