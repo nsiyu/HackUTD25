@@ -2,15 +2,20 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai_service import get_openai_edit, get_openai_process_lecture, get_openai_diagram
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
+PORT = os.getenv("PORT", 8000)
 app = FastAPI(
     title="NoteApp API",
-    version="1.0.0"
+    version="1.0.0",
+    port=PORT
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "https://hack-utd-25.vercel.app/"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
