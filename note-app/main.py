@@ -31,13 +31,19 @@ class ProcessLectureRequest(BaseModel):
 @app.post("/api/v1/lecture/edit")
 async def edit_lecture(request: EditRequest):
     try:
+        if not request.wholeLecture or not request.partToModify or not request.suggestion:
+            raise HTTPException(status_code=400, detail="Missing required fields")
+            
         modified_text = await get_openai_edit(
             request.wholeLecture,
             request.partToModify,
             request.suggestion
         )
         return {"modifiedText": modified_text}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        print(f"Error in edit_lecture: {str(e)}")  # Add logging
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/v1/lecture/process")

@@ -16,32 +16,40 @@ client = openai.OpenAI(
 )
 
 async def get_openai_edit(full_content: str, selected_text: str, suggestion: str) -> str:
-    prompt = (
-        "here is the part of the lecture notes that the user wants to edit:\n"
-        f"{selected_text}\n\n"
-        "their suggestion for modification is:\n"
-        f"{suggestion}\n\n"
-        "please provide the updated lecture content with the suggested modification applied."
-    )
+    # Validate inputs
+    if not selected_text.strip():
+        raise ValueError("Selected text must not be empty.")
+    if not suggestion.strip():
+        raise ValueError("Suggestion must not be empty.")
 
     try:
         response = client.chat.completions.create(
             model="Meta-Llama-3.1-8B-Instruct",
             messages=[
                 {"role": "system", "content": "You are an expert note editor."},
-                {"role": "user", "content": prompt}
+                {"role": "user", "content": f"""
+                Original text: {selected_text}
+                Edit instruction: {suggestion}
+                
+                Provide only the edited version of the text, maintaining the same style and format. If the suggestion is to remove the text, do not include it in the edited text just replace it with empty string.
+                """}
             ],
-            temperature=0.1,
-            top_p=0.1
+            temperature=0.7,
+            max_tokens=1000
         )
-
-        if response and response.choices:
-            return response.choices[0].message.content.strip()
-        else:
-            raise ValueError("Invalid response from SambaNova API")
+        
+        edited_text = response.choices[0].message.content.strip()
+        
+        # Replace the selected text with the edited version in the full content
+        if selected_text not in full_content:
+            raise ValueError("Selected text not found in full content")
+            
+        updated_content = full_content.replace(selected_text, edited_text, 1)
+        return updated_content
+        
     except Exception as e:
-        print(f"Error calling SambaNova API: {str(e)}")
-        raise
+        print(f"Error in get_openai_edit: {str(e)}")
+        raise ValueError(f"Failed to process edit: {str(e)}")
 
 async def get_openai_process_lecture(current_content: str, lecture_content: str) -> str:
     try:
