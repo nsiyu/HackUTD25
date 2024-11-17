@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Markdown Body Container */
+  .markdown-body {
+    @apply text-jet dark:text-dark-text max-w-none leading-relaxed;
+  }
+
+  /* Headings */
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3,
+  .markdown-body h4,
+  .markdown-body h5 {
+    @apply text-jet dark:text-dark-text font-bold;
+  }
+
+  /* Paragraphs */
+  .markdown-body p,
+  .markdown-body li {
+    @apply text-jet dark:text-dark-text;
+  }
+
+  /* Links */
+  .markdown-body a {
+    @apply text-maya hover:underline;
+  }
+
+  /* Lists */
+  .markdown-body ul {
+    @apply list-disc list-inside mb-4 ml-6 !important;
+  }
+
+  .markdown-body ol {
+    @apply list-decimal list-inside mb-4 ml-6 !important;
+  }
+
+  .markdown-body li {
+    @apply mb-2 !important;
+  }
+
+  /* Blockquotes */
+  .markdown-body blockquote {
+    @apply border-l-4 border-maya pl-4 italic text-jet/80 dark:text-white/80 my-4 bg-maya/5 dark:bg-maya/10 py-2 rounded-r-lg;
+  }
+
+  /* Code Blocks and Inline Code */
+  .markdown-body pre {
+    @apply bg-gray-100 dark:bg-dark-surface rounded-lg p-4 overflow-auto text-sm text-gray-800 dark:text-white;
+  }
+
+  .markdown-body code {
+    @apply bg-gray-200 dark:bg-dark-surface rounded px-1 text-sm text-maya;
+  }
+
+  /* Tables */
+  .markdown-body table {
+    @apply w-full border-collapse my-4;
+  }
+
+  .markdown-body th,
+  .markdown-body td {
+    @apply border border-gray-300 dark:border-dark-surface p-2;
+  }
+
+  .markdown-body th {
+    @apply bg-gray-100 dark:bg-dark-surface font-semibold text-center text-jet dark:text-white;
+  }
+
+  .markdown-body td {
+    @apply text-left text-jet dark:text-white;
+  }
+}
