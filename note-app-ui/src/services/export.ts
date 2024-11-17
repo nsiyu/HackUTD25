@@ -3,7 +3,6 @@ import html2pdf from 'html2pdf.js';
 
 export const exportService = {
   async exportToPdf(note: Note) {
-    // Create a temporary div to render the note content
     const element = document.createElement('div');
     element.innerHTML = `
       <div style="padding: 20px; font-family: Arial, sans-serif;">
