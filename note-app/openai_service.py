@@ -85,7 +85,7 @@ async def get_openai_process_lecture(current_content: str, lecture_content: str)
             # Search for similar content
             similar_content = vector_store.similarity_search(
                 lecture_content,
-                k=2
+                k=1
             )
             similar_docs = "\n".join([doc.page_content for doc in similar_content])
             vector_store.persist()
@@ -132,7 +132,7 @@ async def get_openai_process_lecture(current_content: str, lecture_content: str)
         New Lecture Content:
         {lecture_content}
 
-        Similar Previous Content:
+        Similar content from previous lectures:
         {similar_docs}
 
         Research Findings:
@@ -146,7 +146,7 @@ async def get_openai_process_lecture(current_content: str, lecture_content: str)
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an expert at processing and organizing lecture notes. Combine the current notes, new lecture content, similar previous content, and research findings into a well-structured, coherent set of notes. Keep the notes concise and to the point. Only include information that is relevant to the lecture."
+                    "content": "You are an expert at processing and organizing notes. Combine the current notes, new lecture content, similar previous content, only if relevant, and research findings into a well-structured, coherent set of notes. Keep the notes concise and to the point. Only include information that is relevant to the new lecture content."
                 },
                 {
                     "role": "user",
