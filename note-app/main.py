@@ -6,11 +6,9 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
-PORT = os.getenv("PORT", 8000)
 app = FastAPI(
     title="NoteApp API",
     version="1.0.0",
-    port=PORT
 )
 
 app.add_middleware(
@@ -82,3 +80,8 @@ async def generate_diagram(request: DiagramRequest):
     except Exception as e:
         print(f"Error in generate_diagram: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv('PORT', 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
