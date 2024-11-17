@@ -365,7 +365,7 @@ function Home() {
                   }`}
                   title={isRecording ? "Stop recording" : "Start recording"}
                 >
-                  {isRecording ? <FiMicOff size={20} /> : <FiMic size={20} />}
+                  {!isRecording ? <FiMicOff size={20} /> : <FiMic size={20} />}
                 </button>
                 <button
                   type="button"
