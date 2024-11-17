@@ -2105,6 +2105,10 @@ video {
   color: rgb(255 255 255 / 0.7);
 }
 
+.text-pink\/70 {
+  color: rgb(244 91 105 / 0.7);
+}
+
 .placeholder-white\/30::-moz-placeholder {
   color: rgb(255 255 255 / 0.3);
 }
@@ -2152,6 +2156,10 @@ video {
 
 .blur-3xl {
   --tw-blur: blur(64px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+
+.filter {
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 
@@ -2316,6 +2324,10 @@ video {
 
 .disabled\:opacity-50:disabled {
   opacity: 0.5;
+}
+
+.group:hover .group-hover\:opacity-100 {
+  opacity: 1;
 }
 
 .dark\:border-dark-bg:is(.dark *) {

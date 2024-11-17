@@ -28,6 +28,7 @@ import { FiFile, FiEdit3, FiEye, FiShare2, FiDownload, FiTrash2, FiCopy, FiPrint
 import { useProcessLecture } from "../hooks/useProcessLecture";
 import { AskAIModal } from "./AskAIModal";
 import { getApiUrl } from "../config/api";
+import { NoteModal } from "./NoteModal";
 
 function Home() {
   const navigate = useNavigate();
@@ -653,18 +654,24 @@ function Home() {
 
   const handleNewNote = async () => {
     try {
-      const newNote = await noteService.createNote({
-        title: 'Untitled Note',
-        content: '',
-        userId: session?.user?.id || '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-      
+      const newNote = await noteService.createNote("Untitled Note", "");
+      setNotes([newNote, ...notes]);
       setSelectedNote(newNote);
-      setNotes(prev => [newNote, ...prev]);
     } catch (error) {
-      console.error('Error creating new note:', error);
+      console.error("Error creating note:", error);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent note selection when clicking delete
+    try {
+      await noteService.deleteNote(noteId);
+      setNotes(notes.filter(note => note.id !== noteId));
+      if (selectedNote?.id === noteId) {
+        setSelectedNote(null);
+      }
+    } catch (error) {
+      console.error("Error deleting note:", error);
     }
   };
 
@@ -755,15 +762,24 @@ function Home() {
                     selectedNote?.id === note.id
                       ? "bg-white dark:bg-dark-surface border-jet/10 dark:border-white/10 shadow-sm"
                       : "hover:bg-white/50 dark:hover:bg-dark-surface/50 border-transparent"
-                  } border`}
+                  } border group relative`}
                 >
                   <h3 className="font-medium text-jet dark:text-dark-text">{note.title}</h3>
                   <p className="text-sm mt-1 text-jet/70 dark:text-dark-text/70 line-clamp-2">
                     {note.content}
                   </p>
-                  <div className="flex items-center gap-2 mt-3 text-jet/50 dark:text-dark-text/50 text-xs">
-                    <FiClock className="w-3 h-3" />
-                    <span>{note.created_at ? new Date(note.created_at).toLocaleDateString() : ""}</span>
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-2 text-jet/50 dark:text-dark-text/50 text-xs">
+                      <FiClock className="w-3 h-3" />
+                      <span>{note.created_at ? new Date(note.created_at).toLocaleDateString() : ""}</span>
+                    </div>
+                    <button
+                      onClick={(e) => handleDeleteNote(note.id, e)}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-pink/10 text-pink/70 hover:text-pink transition-all"
+                      title="Delete note"
+                    >
+                      <FiTrash2 size={14} />
+                    </button>
                   </div>
                 </button>
               ))}
@@ -792,6 +808,12 @@ function Home() {
           }
         }}
         initialPrompt={selectedText}
+      />
+
+      <NoteModal
+        isOpen={isNoteModalOpen}
+        onClose={() => setIsNoteModalOpen(false)}
+        onSubmit={handleCreateNote}
       />
     </div>
   );

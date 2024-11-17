@@ -49,5 +49,14 @@ export const noteService = {
 
     if (error) throw error;
     return data;
+  },
+
+  async deleteNote(noteId: string) {
+    const { error } = await supabase
+      .from('notes')
+      .delete()
+      .eq('id', noteId);
+      
+    if (error) throw error;
   }
 };
