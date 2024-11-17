@@ -71,10 +71,10 @@ function Landing() {
               <div className="bg-white/50 dark:bg-dark-surface/50 backdrop-blur-sm p-8 rounded-2xl border border-gray-200/50 dark:border-dark-surface">
                 <div className="text-sm font-medium text-maya mb-2">API</div>
                 <h2 className="text-2xl font-medium text-jet dark:text-dark-text mb-3">
-                  Build with Quill
+                  Build with Notable
                 </h2>
                 <p className="text-lg text-jet/70 dark:text-dark-text/70 mb-6">
-                  Start using Quill to drive efficiency and create new revenue streams.
+                  Start using Notable to drive efficiency and create new revenue streams.
                 </p>
                 <button
                   onClick={() => navigate("/login")}
