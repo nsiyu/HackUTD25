@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from openai_service import get_openai_edit, get_openai_process_lecture, get_openai_diagram
 from dotenv import load_dotenv
 import os
+
 load_dotenv()
 
 app = FastAPI(
