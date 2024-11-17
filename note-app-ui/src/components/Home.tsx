@@ -29,6 +29,7 @@ import { useProcessLecture } from "../hooks/useProcessLecture";
 import { AskAIModal } from "./AskAIModal";
 import { getApiUrl } from "../config/api";
 import { NoteModal } from "./NoteModal";
+import { DiagramModal } from "./DiagramModal";
 
 function Home() {
   const navigate = useNavigate();
@@ -577,11 +578,7 @@ function Home() {
 
   const handleGenerateDiagram = useCallback(() => {
     if (selectedText) {
-      // Here you would implement the diagram generation logic
-      setChatMessages(prev => [...prev, 
-        { role: 'user', content: `Generate a diagram for this text: "${selectedText}"` }
-      ]);
-      setIsChatOpen(true);
+      setShowDiagramModal(true);
     }
   }, [selectedText]);
 
@@ -674,6 +671,8 @@ function Home() {
       console.error("Error deleting note:", error);
     }
   };
+
+  const [showDiagramModal, setShowDiagramModal] = useState(false);
 
   return (
     <div className="h-screen bg-white dark:bg-dark-bg flex flex-col">
@@ -814,6 +813,12 @@ function Home() {
         isOpen={isNoteModalOpen}
         onClose={() => setIsNoteModalOpen(false)}
         onSubmit={handleCreateNote}
+      />
+
+      <DiagramModal
+        isOpen={showDiagramModal}
+        onClose={() => setShowDiagramModal(false)}
+        selectedText={selectedText}
       />
     </div>
   );
