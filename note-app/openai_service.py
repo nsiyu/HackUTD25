@@ -1,10 +1,16 @@
 import openai
 import os
 from dotenv import load_dotenv
+from crewai import Agent, Task, Crew
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
+import chromadb
+from datetime import datetime
 
 load_dotenv()
 
 api_key = os.getenv("SAMBANOVA_API_KEY")
+openai_api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     print("Environment variables loaded:")
     print(dict(os.environ))
@@ -52,30 +58,111 @@ async def get_openai_edit(full_content: str, selected_text: str, suggestion: str
 
 async def get_openai_process_lecture(current_content: str, lecture_content: str) -> str:
     try:
+        print("Starting lecture processing...")
+        
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        if not openai_api_key:
+            raise ValueError("OPENAI_API_KEY not found in environment variables")
+        
+        # Initialize ChromaDB and embeddings
+        try:
+            embeddings = OpenAIEmbeddings(api_key=openai_api_key)
+            persist_directory = "data/chroma_db"
+            os.makedirs(persist_directory, exist_ok=True)
+            
+            vector_store = Chroma(
+                persist_directory=persist_directory,
+                embedding_function=embeddings,
+                collection_name="lecture_notes"
+            )
+
+            # Store new lecture content
+            vector_store.add_texts(
+                texts=[lecture_content],
+                metadatas=[{"type": "lecture", "date": datetime.now().isoformat()}]
+            )
+
+            # Search for similar content
+            similar_content = vector_store.similarity_search(
+                lecture_content,
+                k=2
+            )
+            similar_docs = "\n".join([doc.page_content for doc in similar_content])
+            vector_store.persist()
+            
+        except Exception as e:
+            print(f"Vector store operations failed: {str(e)}")
+            similar_docs = ""  # Continue without similar content if vector store fails
+        
+        print("Vector store operations completed")
+
+        # Create CrewAI researcher agent
+        try:
+            researcher = Agent(
+                role="Research Assistant",
+                goal="Find relevant information related to lecture content",
+                backstory="Expert at analyzing and finding relevant academic content",
+                allow_delegation=False,
+                verbose=True  # Add verbose logging
+            )
+
+            research_task = Task(
+                description=f"Analyze and find relevant information for: {lecture_content}",
+                agent=researcher
+            )
+
+            crew = Crew(
+                agents=[researcher],
+                tasks=[research_task],
+                verbose=True  # Add verbose logging
+            )
+            
+            print("Starting CrewAI research...")
+            research_result = crew.kickoff()
+            print("CrewAI research completed")
+            
+        except Exception as e:
+            print(f"CrewAI operations failed: {str(e)}")
+            research_result = ""  # Continue without research if CrewAI fails
+
+        # Combine all content
+        combined_content = f"""Current Notes:
+        {current_content}
+
+        New Lecture Content:
+        {lecture_content}
+
+        Similar Previous Content:
+        {similar_docs}
+
+        Research Findings:
+        {research_result}"""
+
+        print("Processing with OpenAI...")
+        
+        # Process with OpenAI
         response = client.chat.completions.create(
             model="Meta-Llama-3.1-8B-Instruct",
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an expert at processing and organizing lecture notes. Your task is to take the current notes and new lecture content and merge them into a well-structured, coherent document. Maintain academic tone and organize content logically."
+                    "content": "You are an expert at processing and organizing lecture notes. Combine the current notes, new lecture content, similar previous content, and research findings into a well-structured, coherent set of notes. Keep the notes concise and to the point. Only include information that is relevant to the lecture."
                 },
                 {
                     "role": "user",
-                    "content": f"""Current Notes:
-{current_content}
-
-New Lecture Content:
-{lecture_content}
-
-Please process and merge these into well-structured notes, maintaining the existing format and adding new information appropriately."""
+                    "content": combined_content
                 }
             ],
             temperature=0.3,
             max_tokens=4000
         )
+        
+        print("OpenAI processing completed")
         return response.choices[0].message.content
+
     except Exception as e:
-        raise Exception(f"OpenAI API error: {str(e)}")
+        print(f"Detailed error in get_openai_process_lecture: {str(e)}")
+        raise Exception(f"Processing error: {str(e)}")
 
 async def get_openai_diagram(text: str) -> str:
     try:
@@ -121,3 +208,14 @@ async def get_openai_diagram(text: str) -> str:
     except Exception as e:
         print("Error generating diagram:", str(e))
         raise
+
+async def search_previous_lectures(query: str, k: int = 5):
+    embeddings = OpenAIEmbeddings()
+    vector_store = Chroma(
+        persist_directory="data/chroma_db",
+        embedding_function=embeddings,
+        collection_name="lecture_notes"
+    )
+    
+    results = vector_store.similarity_search(query, k=k)
+    return [{"content": doc.page_content, "metadata": doc.metadata} for doc in results]
