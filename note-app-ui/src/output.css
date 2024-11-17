@@ -1525,6 +1525,10 @@ video {
   cursor: text;
 }
 
+.cursor-grab {
+  cursor: grab;
+}
+
 .select-none {
   -webkit-user-select: none;
      -moz-user-select: none;
@@ -1645,6 +1649,10 @@ video {
 
 .overflow-x-hidden {
   overflow-x: hidden;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
 }
 
 .whitespace-pre-wrap {
@@ -2422,6 +2430,10 @@ video {
 
 .focus\:ring-maya\/50:focus {
   --tw-ring-color: rgb(85 193 255 / 0.5);
+}
+
+.active\:cursor-grabbing:active {
+  cursor: grabbing;
 }
 
 .disabled\:cursor-not-allowed:disabled {

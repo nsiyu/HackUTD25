@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { FiMoon, FiSun } from "react-icons/fi";
 import { useTheme } from "../contexts/ThemeContext";
+import NetworkSphere from './NetworkSpheres';
 
 function Landing() {
   const navigate = useNavigate();
@@ -88,29 +89,8 @@ function Landing() {
 
           <div className="relative aspect-square">
             <div className="absolute inset-0 bg-gradient-to-br from-maya/20 to-pink/20 rounded-full blur-3xl" />
-            <div className="relative z-10 w-full h-full flex items-center justify-center">
-              <svg 
-                viewBox="0 0 200 200" 
-                className="w-full h-full opacity-80 dark:opacity-90"
-              >
-                {/* Network nodes */}
-                <circle cx="100" cy="100" r="50" className="fill-maya/20 dark:fill-maya/30" />
-                <circle cx="70" cy="60" r="20" className="fill-pink/20 dark:fill-pink/30" />
-                <circle cx="140" cy="80" r="25" className="fill-maya/30 dark:fill-maya/40" />
-                <circle cx="90" cy="150" r="30" className="fill-pink/30 dark:fill-pink/40" />
-                
-                {/* Connection lines */}
-                <line x1="100" y1="100" x2="70" y2="60" className="stroke-maya/40 stroke-2" />
-                <line x1="100" y1="100" x2="140" y2="80" className="stroke-pink/40 stroke-2" />
-                <line x1="100" y1="100" x2="90" y2="150" className="stroke-maya/40 stroke-2" />
-                <line x1="70" y1="60" x2="140" y2="80" className="stroke-pink/40 stroke-2" />
-                
-                {/* Animated pulse circles */}
-                <circle cx="100" cy="100" r="45" className="fill-none stroke-maya animate-pulse" />
-                <circle cx="70" cy="60" r="15" className="fill-none stroke-pink animate-pulse" />
-                <circle cx="140" cy="80" r="20" className="fill-none stroke-maya animate-pulse" />
-                <circle cx="90" cy="150" r="25" className="fill-none stroke-pink animate-pulse" />
-              </svg>
+            <div className="relative z-10 w-full h-full">
+              <NetworkSphere />
             </div>
           </div>
         </div>
