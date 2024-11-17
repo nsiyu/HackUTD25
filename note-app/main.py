@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from openai_service import get_openai_edit, get_openai_process_lecture
+from openai_service import get_openai_edit, get_openai_process_lecture, get_openai_diagram
 
 app = FastAPI(
     title="NoteApp API",
@@ -27,6 +27,9 @@ class ProcessLectureRequest(BaseModel):
     noteId: str
     currentContent: str
     lectureContent: str
+
+class DiagramRequest(BaseModel):
+    text: str
 
 @app.post("/api/v1/lecture/edit")
 async def edit_lecture(request: EditRequest):
@@ -60,3 +63,17 @@ async def process_lecture(request: ProcessLectureRequest):
 @app.get("/")
 async def root():
     return {"message": "Welcome to NoteApp API"}
+
+@app.post("/api/v1/diagram/generate")
+async def generate_diagram(request: DiagramRequest):
+    try:
+        if not request.text:
+            raise HTTPException(status_code=400, detail="Text is required")
+            
+        diagram = await get_openai_diagram(request.text)
+        return {"diagram": diagram}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"Error in generate_diagram: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

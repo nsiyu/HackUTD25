@@ -40,7 +40,6 @@ async def get_openai_edit(full_content: str, selected_text: str, suggestion: str
         
         edited_text = response.choices[0].message.content.strip()
         
-        # Replace the selected text with the edited version in the full content
         if selected_text not in full_content:
             raise ValueError("Selected text not found in full content")
             
@@ -77,3 +76,48 @@ Please process and merge these into well-structured notes, maintaining the exist
         return response.choices[0].message.content
     except Exception as e:
         raise Exception(f"OpenAI API error: {str(e)}")
+
+async def get_openai_diagram(text: str) -> str:
+    try:
+        response = client.chat.completions.create(
+            model="Meta-Llama-3.1-8B-Instruct",
+            messages=[
+                {
+                    "role": "system",
+                    "content": """You are a diagram generator that ONLY outputs valid Mermaid.js syntax.
+                    DO NOT include any explanations or text before or after the diagram.
+                    For flowcharts, use this format:
+                    flowchart TD
+                      A[Step 1] --> B[Step 2]
+                      B --> C[Step 3]
+                    
+                    For sequence diagrams:
+                    sequenceDiagram
+                      participant A
+                      participant B
+                      A->>B: Message
+                    
+                    For class diagrams:
+                    classDiagram
+                      class A
+                      A : +method()
+                    
+                    Always test that your output is valid Mermaid syntax.
+                    Use simple arrows --> for connections.
+                    Avoid using special characters in node text."""
+                },
+                {
+                    "role": "user",
+                    "content": f"Convert this text to a Mermaid diagram. Use the most appropriate diagram type:\n{text}"
+                }
+            ],
+            temperature=0.3,
+            max_tokens=1000
+        )
+        
+        diagram = response.choices[0].message.content.strip()
+        return diagram
+        
+    except Exception as e:
+        print("Error generating diagram:", str(e))
+        raise
